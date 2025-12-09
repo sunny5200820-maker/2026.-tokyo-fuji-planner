@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>關東8日女子旅 | 吉伊卡哇風</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'chiika-pink': '#FFD1DC', // 櫻花粉
+                        'chiika-blue': '#A2D2FF', // 寶寶藍
+                        'chiika-yellow': '#FFF5BA', // 奶油黃
+                        'chiika-bg': '#FFF5F7',   // 極淡粉底
+                        'chiika-text': '#5D5D5D', // 深灰字
+                    },
+                    fontFamily: {
+                        sans: ['Zen Maru Gothic', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #A2D2FF; 
+            font-family: 'Zen Maru Gothic', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .banner-container {
+            height: 250px;
+            /* 預設圖，若您有上傳 github 請改成您的連結 */
+            background-image: url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1920&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: left center;
+            position: relative;
+        }
+        .app-content {
+            background-color: #FFF5F7;
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            margin-top: -30px; 
+            position: relative;
+            z-index: 10;
+            min-height: calc(100vh - 220px);
+            padding-bottom: 100px; /* 增加底部空間給 Tab */
+        }
+        /* 漂浮的 Tabs */
+        .floating-tabs {
+            position: fixed;
+            bottom: 20px; 
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 40;
+            display: flex;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+        .tab-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #9CA3AF;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .tab-btn.active {
+            background: #FFD1DC;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(255, 209, 220, 0.6);
+        }
+        .tab-label {
+            position: absolute;
+            bottom: -20px;
+            font-size: 10px;
+            width: max-content;
+            color: #888;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tab-btn.active .tab-label {
+            opacity: 1;
+            color: #FF8FAB;
+            font-weight: bold;
+        }
+        /* 卡片樣式 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(255, 183, 178, 0.2);
+            transition: transform 0.1s;
+        }
+        .card:active {
+            transform: scale(0.99);
+        }
+        /* 筆記本風格 Checkbox */
+        .notepad-item {
+            border-bottom: 1px dashed #cbd5e1;
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .notepad-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FFD1DC;
+            border-radius: 6px;
+            position: relative;
+            cursor: pointer;
+        }
+        .notepad-checkbox:checked {
+            background-color: #FFD1DC;
+        }
+        .notepad-checkbox:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+        }
+        .strikethrough {
+            text-decoration: line-through;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="max-w-md mx-auto relative min-h-screen bg-blue-200">
+
+    <div class="banner-container relative">
+        <div class="absolute bottom-10 left-4 text-white drop-shadow-md">
+            <h1 class="text-2xl font-bold">關東8日女子旅 🌸</h1>
+            <p class="text-sm opacity-90">富士山自駕 x 吉伊卡哇</p>
+        </div>
+    </div>
+
+    <div class="app-content px-4 py-6">
+
+        <div v-if="currentTab === 'itinerary'">
+            
+            <div class="flex overflow-x-auto hide-scrollbar gap-3 mb-6 pb-2">
+                <div v-for="(day, index) in tripDays" :key="index" 
+                     @click="selectedDayIndex = index"
+                     :class="['flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all', 
+                              selectedDayIndex === index ? 'bg-chiika-pink text-white shadow-md' : 'bg-white text-gray-400']">
+                    <span class="text-xs font-bold">{{ day.week }}</span>
+                    <span class="text-2xl font-bold">{{ day.dateNum }}</span>
+                </div>
+            </div>
+
+            <div class="rounded-2xl p-4 mb-6 flex items-center justify-between shadow-sm text-white" 
+                 style="background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-sun text-3xl text-yellow-100"></i>
+                    <div>
+                        <div class="text-lg font-bold">富士山</div>
+                        <div class="text-xs opacity-90">晴時多雲</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-bold">12°C</div>
+                    <div class="text-xs opacity-80">體感 10°C</div>
+                </div>
+            </div>
+
+            <div class="space-y-0 pb-20">
+                <div v-for="(item, idx) in currentDayItinerary" :key="item.id" class="relative">
+                    
+                    <div v-if="idx > 0" class="ml-5 border-l-2 border-dashed border-gray-300 h-10 flex items-center pl-6 text-xs text-gray-400">
+                        <i :class="getTransportIcon(item.transportType)" class="mr-2"></i>
+                        <span>約 {{ item.travelTime }} 分鐘</span>
+                    </div>
+                    <div v-else-if="selectedDayIndex > 0" class="ml-5 border-l-2 border-dashed border-gray-300 h-8 flex items-center pl-6 text-xs text-gray-400 pb-2">
+                         <i class="fa-solid fa-bed mr-2"></i> 從昨晚住宿出發
+                    </div>
+
+                    <div @click="openMap(item.name)" 
+                         :class="['card p-4 flex gap-4 cursor-pointer relative group', item.category === 'Flight' ? 'bg-gradient-to-r from-blue-100 to-purple-100' : 'bg-white']">
+                        
+                        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-chiika-blue text-xl">
+                            <i :class="getCategoryIcon(item.category)"></i>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-bold text-lg leading-tight">{{ item.name }}</h3>
+                                <button @click.stop="deleteItem(idx)" class="text-gray-300 hover:text-red-400 p-1">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                            
+                            <div v-if="item.hours" class="text-xs mt-1 opacity-80">
+                                <i class="fa-regular fa-clock mr-1"></i> {{ item.hours }}
+                            </div>
+                            <div v-if="item.ticket" class="text-xs mt-1 text-pink-500 font-bold">
+                                <i class="fa-solid fa-ticket mr-1"></i> {{ item.ticket }}
+                            </div>
+                            <p class="text-xs mt-2 opacity-70 leading-relaxed">{{ item.note }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button @click="showAddModal = true" class="fixed bottom-24 right-6 w-14 h-14 bg-chiika-blue text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-30 hover:bg-blue-300 transition-colors">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+
+
+        <div v-if="currentTab === 'prep'" class="pb-24">
+            <h2 class="text-xl font-bold text-chiika-text mb-4 pl-2 border-l-4 border-pink-300">行前準備清單</h2>
+
+            <a href="https://vjw-lp.digital.go.jp/zh-hant/" target="_blank" 
+               class="block w-full bg-gradient-to-r from-pink-400 to-red-400 text-white p-4 rounded-xl shadow-lg mb-6 flex items-center justify-between hover:opacity-90 transition">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-qrcode text-2xl"></i>
+                    <div>
