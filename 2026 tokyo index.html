@@ -242,4 +242,422 @@
                class="block w-full bg-gradient-to-r from-pink-400 to-red-400 text-white p-4 rounded-xl shadow-lg mb-6 flex items-center justify-between hover:opacity-90 transition">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-qrcode text-2xl"></i>
+
                     <div>
+                        <div class="font-bold text-lg">Visit Japan Web</div>
+                        <div class="text-xs opacity-90">入境日本必填，按此前往</div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+
+            <div class="bg-white rounded-2xl shadow-sm p-6 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-4 bg-chiika-yellow opacity-50"></div>
+                
+                <div v-for="(item, idx) in prepList" :key="idx" class="notepad-item">
+                    <input type="checkbox" v-model="item.checked" class="notepad-checkbox">
+                    <span :class="['flex-1 text-sm font-medium', item.checked ? 'strikethrough' : 'text-gray-700']">{{ item.text }}</span>
+                    <button @click="removePrepItem(idx)" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="mt-4 flex gap-2">
+                    <input v-model="newPrepInput" @keyup.enter="addPrepItem" placeholder="新增準備項目..." class="flex-1 bg-gray-50 border-b-2 border-gray-200 p-2 text-sm outline-none focus:border-chiika-pink">
+                    <button @click="addPrepItem" class="text-chiika-pink font-bold text-sm">新增</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div v-if="currentTab === 'shopping'" class="pb-24">
+            <h2 class="text-xl font-bold text-chiika-text mb-4 pl-2 border-l-4 border-blue-300">購物願望清單</h2>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <div v-for="(item, idx) in shoppingList" :key="idx" class="card p-3 flex flex-col items-center relative group">
+                    <button @click="shoppingList.splice(idx, 1)" class="absolute top-2 right-2 w-6 h-6 bg-white rounded-full text-red-400 shadow flex items-center justify-center z-10">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="w-full h-32 bg-gray-100 rounded-lg mb-2 overflow-hidden flex items-center justify-center">
+                        <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                        <i v-else class="fa-regular fa-image text-gray-300 text-3xl"></i>
+                    </div>
+                    <div class="font-bold text-sm text-center w-full truncate">{{ item.name }}</div>
+                </div>
+
+                <div @click="showShopModal = true" class="card p-3 flex flex-col items-center justify-center min-h-[160px] cursor-pointer border-2 border-dashed border-gray-300 hover:border-pink-300 bg-transparent shadow-none">
+                    <i class="fa-solid fa-plus text-3xl text-gray-300"></i>
+                    <div class="text-xs text-gray-400 mt-2">新增商品</div>
+                </div>
+            </div>
+        </div>
+
+
+        <div v-if="currentTab === 'expenses'" class="pb-24">
+            
+            <div class="flex bg-white rounded-full p-1 mb-6 shadow-sm">
+                <button @click="expenseMode = 'personal'" :class="['flex-1 py-2 rounded-full text-sm font-bold transition', expenseMode === 'personal' ? 'bg-chiika-yellow text-gray-700 shadow-sm' : 'text-gray-400']">
+                    個人記帳
+                </button>
+                <button @click="expenseMode = 'split'" :class="['flex-1 py-2 rounded-full text-sm font-bold transition', expenseMode === 'split' ? 'bg-chiika-pink text-white shadow-sm' : 'text-gray-400']">
+                    分帳表
+                </button>
+            </div>
+
+            <div v-if="expenseMode === 'personal'">
+                <div class="bg-chiika-yellow text-gray-700 p-6 rounded-2xl mb-4 text-center shadow-lg relative overflow-hidden">
+                    <i class="fa-solid fa-coins absolute -bottom-4 -right-4 text-6xl text-yellow-200 opacity-50"></i>
+                    <div class="text-sm opacity-80">個人總花費 (JPY)</div>
+                    <div class="text-4xl font-bold mt-1">¥ {{ totalExpenses.toLocaleString() }}</div>
+                </div>
+                <div class="space-y-3">
+                    <div v-for="(exp, idx) in expenses" :key="idx" class="card p-3 flex justify-between items-center relative">
+                        <button @click="expenses.splice(idx, 1)" class="absolute -left-2 -top-2 w-5 h-5 bg-red-400 text-white rounded-full text-xs hidden group-hover:flex items-center justify-center">x</button>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                <i :class="getCategoryIcon(exp.category)"></i>
+                            </div>
+                            <div>
+                                <div class="font-bold text-sm">{{ exp.name }}</div>
+                                <div class="text-xs text-gray-400">{{ exp.date }} · {{ exp.payment }}</div>
+                            </div>
+                        </div>
+                        <div class="font-bold text-gray-700">¥{{ parseInt(exp.amount).toLocaleString() }}</div>
+                    </div>
+                </div>
+                <button @click="showExpenseModal = true" class="fixed bottom-24 right-6 w-14 h-14 bg-yellow-400 text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-30">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <div v-if="expenseMode === 'split'">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 mb-2 font-bold ml-1">分帳成員</div>
+                    <div class="flex flex-wrap gap-2">
+                        <div v-for="(member, idx) in splitMembers" :key="idx" class="bg-white px-3 py-1 rounded-full text-sm shadow-sm flex items-center gap-2 border border-pink-100">
+                            <span class="text-gray-600">{{ member }}</span>
+                            <button @click="removeMember(idx)" class="text-gray-300 hover:text-red-400 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <button @click="addMember" class="px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-500 hover:bg-gray-300 transition">+ 加人</button>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-chiika-text mb-3 pl-2 border-l-4 border-pink-300">公款支出記錄</h3>
+                <div class="space-y-3">
+                    <div v-for="(bill, idx) in splitBills" :key="idx" class="card p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-bold text-lg text-gray-700">{{ bill.item }}</div>
+                            <div class="font-bold text-pink-500">¥{{ parseInt(bill.amount).toLocaleString() }}</div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
+                            <div><span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded mr-1">付款人</span> {{ bill.payer }}</div>
+                            <button @click="splitBills.splice(idx, 1)" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div v-if="splitBills.length === 0" class="text-center text-gray-400 text-sm py-8">
+                        目前沒有分帳記錄<br>點擊右下角新增
+                    </div>
+                </div>
+
+                <button @click="showSplitModal = true" class="fixed bottom-24 right-6 w-14 h-14 bg-chiika-pink text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-30">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </button>
+            </div>
+        </div>
+
+
+        <div v-if="currentTab === 'info'" class="pb-24">
+            <h2 class="text-xl font-bold text-chiika-text mb-4 pl-2 border-l-4 border-gray-300">旅行資訊</h2>
+            
+            <div class="card p-5 mb-4">
+                <h3 class="font-bold text-chiika-text mb-3"><i class="fa-solid fa-calculator text-gray-400 mr-2"></i>匯率試算</h3>
+                <div class="flex gap-2 items-center">
+                    <input type="number" v-model="currencyInput" placeholder="日幣" class="w-full bg-gray-50 rounded-lg p-2 border border-gray-200 outline-none focus:border-chiika-blue">
+                    <i class="fa-solid fa-arrow-right text-gray-400"></i>
+                    <div class="w-full bg-gray-100 rounded-lg p-2 text-gray-700 font-bold">
+                        NT$ {{ (currencyInput * 0.215).toFixed(0) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4">
+                <h3 class="font-bold text-chiika-text mb-3">住宿資訊</h3>
+                <ul class="space-y-3 text-sm">
+                    <li class="flex gap-3">
+                        <i class="fa-solid fa-hotel text-pink-400 mt-1"></i>
+                        <div>
+                            <div class="font-bold">錦系町 Sumida City</div>
+                            <div class="text-xs text-gray-500">第 1-2 晚</div>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <i class="fa-solid fa-hotel text-pink-400 mt-1"></i>
+                        <div>
+                            <div class="font-bold">Megu Fuji 2021</div>
+                            <div class="text-xs text-gray-500">第 3-4 晚</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="floating-tabs">
+        <button @click="currentTab = 'itinerary'" :class="['tab-btn', currentTab === 'itinerary' ? 'active' : '']">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span class="tab-label">行程</span>
+        </button>
+        <button @click="currentTab = 'prep'" :class="['tab-btn', currentTab === 'prep' ? 'active' : '']">
+            <i class="fa-solid fa-suitcase-rolling"></i>
+            <span class="tab-label">行前</span>
+        </button>
+        <button @click="currentTab = 'shopping'" :class="['tab-btn', currentTab === 'shopping' ? 'active' : '']">
+            <i class="fa-solid fa-basket-shopping"></i>
+            <span class="tab-label">購物</span>
+        </button>
+        <button @click="currentTab = 'expenses'" :class="['tab-btn', currentTab === 'expenses' ? 'active' : '']">
+            <i class="fa-solid fa-sack-dollar"></i>
+            <span class="tab-label">花費</span>
+        </button>
+        <button @click="currentTab = 'info'" :class="['tab-btn', currentTab === 'info' ? 'active' : '']">
+            <i class="fa-solid fa-circle-info"></i>
+            <span class="tab-label">資訊</span>
+        </button>
+    </div>
+
+    <div v-if="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl">
+            <h3 class="font-bold text-xl mb-4 text-center">新增行程</h3>
+            <div class="space-y-3">
+                <input v-model="newItem.name" placeholder="名稱" class="w-full p-2 border rounded-lg bg-gray-50">
+                <select v-model="newItem.category" class="w-full p-2 border rounded-lg bg-gray-50">
+                    <option value="Sightseeing">景點</option>
+                    <option value="Food">美食</option>
+                    <option value="Shopping">購物</option>
+                    <option value="Other">其他</option>
+                </select>
+                <div class="flex gap-2">
+                    <button @click="showAddModal = false" class="flex-1 py-2 bg-gray-200 rounded-lg">取消</button>
+                    <button @click="addItem" class="flex-1 py-2 bg-chiika-blue text-white rounded-lg">新增</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showShopModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5">
+            <h3 class="font-bold text-xl mb-4 text-center">加入購物車</h3>
+            <input v-model="newShopItem.name" placeholder="商品名稱" class="w-full p-2 border rounded-lg mb-3">
+            <label class="block w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-center text-gray-400 cursor-pointer hover:bg-gray-50">
+                <i class="fa-solid fa-camera mb-1"></i><br>上傳圖片
+                <input type="file" @change="handleImageUpload" class="hidden">
+            </label>
+            <div v-if="newShopItem.image" class="mt-2 text-center text-xs text-green-500">已選擇圖片</div>
+            <div class="flex gap-2 mt-4">
+                <button @click="showShopModal = false" class="flex-1 py-2 bg-gray-200 rounded-lg">取消</button>
+                <button @click="addShopItem" class="flex-1 py-2 bg-pink-400 text-white rounded-lg">確定</button>
+            </div>
+        </div>
+    </div>
+
+     <div v-if="showExpenseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5">
+            <h3 class="font-bold text-xl mb-4 text-center">個人記帳</h3>
+            <div class="space-y-3">
+                <input v-model="newExpense.name" placeholder="項目名稱" class="w-full p-2 border rounded-lg">
+                <input type="number" v-model="newExpense.amount" placeholder="金額 (JPY)" class="w-full p-2 border rounded-lg">
+                <select v-model="newExpense.category" class="w-full p-2 border rounded-lg">
+                    <option value="Food">飲食</option>
+                    <option value="Transport">交通</option>
+                    <option value="Shopping">購物</option>
+                    <option value="Other">其他</option>
+                </select>
+                <div class="flex gap-2 pt-2">
+                    <button @click="showExpenseModal = false" class="flex-1 py-2 bg-gray-200 rounded-lg">取消</button>
+                    <button @click="addExpense" class="flex-1 py-2 bg-yellow-400 text-white rounded-lg">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showSplitModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-5 border-4 border-chiika-pink">
+            <h3 class="font-bold text-xl mb-4 text-center text-chiika-text">新增公款支出</h3>
+            <div class="space-y-3">
+                <div class="text-xs text-gray-400">誰先墊錢？</div>
+                <div class="flex gap-2 overflow-x-auto pb-2">
+                    <button v-for="m in splitMembers" :key="m" 
+                        @click="newSplit.payer = m"
+                        :class="['px-3 py-1 rounded-full text-sm border whitespace-nowrap', newSplit.payer === m ? 'bg-chiika-pink text-white border-chiika-pink' : 'border-gray-300 text-gray-500']">
+                        {{ m }}
+                    </button>
+                </div>
+
+                <input v-model="newSplit.item" placeholder="項目 (例: 租車費)" class="w-full p-2 border rounded-lg">
+                <input type="number" v-model="newSplit.amount" placeholder="總金額 (JPY)" class="w-full p-2 border rounded-lg">
+                
+                <div class="flex gap-2 pt-2">
+                    <button @click="showSplitModal = false" class="flex-1 py-2 bg-gray-200 rounded-lg">取消</button>
+                    <button @click="addSplitBill" class="flex-1 py-2 bg-chiika-pink text-white rounded-lg">新增記錄</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        setup() {
+            const currentTab = ref('itinerary');
+            const selectedDayIndex = ref(0);
+            const currencyInput = ref('');
+            
+            // Modals & Mode
+            const showAddModal = ref(false);
+            const showShopModal = ref(false);
+            const showExpenseModal = ref(false);
+            const showSplitModal = ref(false);
+            const expenseMode = ref('personal'); // personal | split
+
+            // Data
+            const tripDays = [
+                { date: '2026-03-27', week: 'Fri', dateNum: '27' },
+                { date: '2026-03-28', week: 'Sat', dateNum: '28' },
+                { date: '2026-03-29', week: 'Sun', dateNum: '29' },
+                { date: '2026-03-30', week: 'Mon', dateNum: '30' },
+                { date: '2026-03-31', week: 'Tue', dateNum: '31' },
+                { date: '2026-04-01', week: 'Wed', dateNum: '01' },
+                { date: '2026-04-02', week: 'Thu', dateNum: '02' },
+                { date: '2026-04-03', week: 'Fri', dateNum: '03' }
+            ];
+
+            const itineraryData = ref([
+                [{ id: 1, category: 'Flight', name: '酷航 TR898 起飛', hours: '06:40', note: '桃園第一航廈', travelTime: 0, transportType: 'flight' }],
+                [], [], [], [], [], [], [] // Placeholder for other days
+            ]);
+
+            // Shopping List
+            const shoppingList = ref([
+                { name: '吉伊卡哇玩偶', image: '' },
+                { name: '藥妝店面膜', image: '' }
+            ]);
+
+            // Prep List (行前)
+            const prepList = ref([
+                { text: '護照 (效期6個月以上)', checked: false },
+                { text: 'Visit Japan Web 截圖', checked: false },
+                { text: '日幣現金', checked: false },
+                { text: '信用卡 (海外回饋高)', checked: false },
+                { text: '網卡 / 漫遊開通', checked: false },
+                { text: '駕照 + 日文譯本 (自駕用)', checked: false }
+            ]);
+            const newPrepInput = ref('');
+
+            // Expenses - Personal
+            const expenses = ref([
+                { category: 'Transport', name: '西瓜卡儲值', date: '03/27', amount: 5000, payment: '現金' }
+            ]);
+
+            // Expenses - Split Bill
+            const splitMembers = ref(['我', '小八', '兔兔']);
+            const splitBills = ref([]); // { item: '', amount: 0, payer: '' }
+            const newSplit = ref({ item: '', amount: '', payer: '我' });
+
+            // Temp Models
+            const newItem = ref({ name: '', category: 'Sightseeing', hours: '', ticket: '', note: '', travelTime: 15, transportType: 'walk' });
+            const newShopItem = ref({ name: '', image: null });
+            const newExpense = ref({ category: 'Food', name: '', amount: '', payment: '現金', date: '' });
+
+            // Computeds
+            const currentDayItinerary = computed(() => itineraryData.value[selectedDayIndex.value] || []);
+            const totalExpenses = computed(() => expenses.value.reduce((sum, item) => sum + Number(item.amount), 0));
+
+            // Methods
+            const getCategoryIcon = (cat) => {
+                const map = { 'Sightseeing': 'fa-camera', 'Food': 'fa-utensils', 'Shopping': 'fa-bag-shopping', 'Flight': 'fa-plane', 'Transport': 'fa-train-subway', 'Hotel': 'fa-hotel', 'Other': 'fa-star' };
+                return map[cat] || 'fa-star';
+            };
+            const getTransportIcon = (type) => {
+                const map = { 'walk': 'fa-person-walking', 'car': 'fa-car', 'train': 'fa-train-subway', 'bike': 'fa-bicycle', 'flight': 'fa-plane' };
+                return map[type] || 'fa-person-walking';
+            };
+            const openMap = (keyword) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`, '_blank');
+            
+            // Shopping Methods
+            const handleImageUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => newShopItem.value.image = e.target.result;
+                    reader.readAsDataURL(file);
+                }
+            };
+            const addShopItem = () => {
+                if(!newShopItem.value.name) return;
+                shoppingList.value.push({ ...newShopItem.value });
+                showShopModal.value = false;
+                newShopItem.value = { name: '', image: null };
+            };
+
+            // Itinerary Methods
+            const addItem = () => {
+                if(!newItem.value.name) return;
+                const list = itineraryData.value[selectedDayIndex.value];
+                list.push({ ...newItem.value, id: Date.now() });
+                showAddModal.value = false;
+                newItem.value = { name: '', category: 'Sightseeing', hours: '', ticket: '', note: '', travelTime: 15, transportType: 'walk' };
+            };
+            const deleteItem = (idx) => {
+                if(confirm('刪除此行程？')) itineraryData.value[selectedDayIndex.value].splice(idx, 1);
+            };
+
+            // Prep Methods
+            const addPrepItem = () => {
+                if(!newPrepInput.value) return;
+                prepList.value.push({ text: newPrepInput.value, checked: false });
+                newPrepInput.value = '';
+            };
+            const removePrepItem = (idx) => prepList.value.splice(idx, 1);
+
+            // Expense Methods
+            const addExpense = () => {
+                if(!newExpense.value.amount) return;
+                const today = new Date();
+                const dateStr = `${(today.getMonth()+1).toString().padStart(2, '0')}/${today.getDate().toString().padStart(2, '0')}`;
+                expenses.value.push({ ...newExpense.value, date: dateStr });
+                showExpenseModal.value = false;
+                newExpense.value = { category: 'Food', name: '', amount: '', payment: '現金', date: '' };
+            };
+
+            // Split Bill Methods
+            const addMember = () => {
+                const name = prompt('請輸入成員名稱：');
+                if(name) splitMembers.value.push(name);
+            };
+            const removeMember = (idx) => {
+                if(confirm(`移除成員 ${splitMembers.value[idx]}？`)) splitMembers.value.splice(idx, 1);
+            };
+            const addSplitBill = () => {
+                if(!newSplit.value.amount || !newSplit.value.item) return;
+                splitBills.value.push({ ...newSplit.value });
+                showSplitModal.value = false;
+                newSplit.value = { item: '', amount: '', payer: splitMembers.value[0] || '我' };
+            };
+
+            return {
+                currentTab, selectedDayIndex, tripDays, currentDayItinerary, 
+                getCategoryIcon, getTransportIcon, openMap, currencyInput,
+                showAddModal, newItem, addItem, deleteItem,
+                shoppingList, showShopModal, newShopItem, handleImageUpload, addShopItem,
+                expenses, totalExpenses, showExpenseModal, newExpense, addExpense, expenseMode,
+                prepList, newPrepInput, addPrepItem, removePrepItem,
+                splitMembers, splitBills, showSplitModal, newSplit, addMember, removeMember, addSplitBill
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
